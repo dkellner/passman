@@ -51,6 +51,9 @@
 A dmenu dialog will pop up, let you chose the desired entry and enter the credentials via xdotool
 in the form "user<tab>password<enter>" or "password<enter>" if there is no user for an entry.
 
+You may map this command to an easy system-wide keyboard shortcut to save time when filling out
+browser login forms.
+
 ## License
 
 TrayNotify is free software: you can redistribute it and/or modify

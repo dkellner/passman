@@ -1,4 +1,4 @@
-# passman - A simple command line password manager!
+# passman - A simple command line password manager
 
 ## Features
 
@@ -12,11 +12,11 @@
 
 1. You have to have the following software installed an accessible on your system:
 
-    * [bash](http://www.gnu.org/software/bash/)
-    * [GnuPG](http://www.gnupg.org/)
-    * [dmenu](http://tools.suckless.org/dmenu/)
-    * [xdotool](http://www.semicomplete.com/projects/xdotool/)
-    * [pwgen](http://sourceforge.net/projects/pwgen/)
+    [bash](http://www.gnu.org/software/bash/)
+    [GnuPG](http://www.gnupg.org/)
+    [dmenu](http://tools.suckless.org/dmenu/)
+    [xdotool](http://www.semicomplete.com/projects/xdotool/)
+    [pwgen](http://sourceforge.net/projects/pwgen/)
 
 2. Create a plain password file with entries on each line like
 

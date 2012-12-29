@@ -1,4 +1,4 @@
-# passman - A simple bash password manager with support for login forms!
+# passman - A simple command line password manager!
 
 ## Features
 
@@ -12,17 +12,17 @@
 
 1. You have to have the following software installed an accessible on your system:
 
-* [bash](http://www.gnu.org/software/bash/)
-* [GnuPG](http://www.gnupg.org/)
-* [dmenu](http://tools.suckless.org/dmenu/)
-* [xdotool](http://www.semicomplete.com/projects/xdotool/)
-* [pwgen](http://sourceforge.net/projects/pwgen/)
+    * [bash](http://www.gnu.org/software/bash/)
+    * [GnuPG](http://www.gnupg.org/)
+    * [dmenu](http://tools.suckless.org/dmenu/)
+    * [xdotool](http://www.semicomplete.com/projects/xdotool/)
+    * [pwgen](http://sourceforge.net/projects/pwgen/)
 
 2. Create a plain password file with entries on each line like
 
     site,user,pass
 
-and encrypt it with the following command
+    and encrypt it with the following command
 
     $ gpg -e -r <gpg_identity> <password_file>
 
@@ -40,11 +40,11 @@ and encrypt it with the following command
 
     $ passman add <site> <user>
 
-### Getting a password
+#### Getting a password
 
     $ passman get <site>
 
-### Filling forms
+#### Filling forms
 
     $ passman fill
 

@@ -28,6 +28,8 @@
 
 3. Modify the two variables $PASSFILE and $GPG_IDENTITY in the *passman* script to your needs.
 
+4. For convencience set up a GPG-Agent which caches your GPG credentials for some time.
+
 ### Running
 
 #### Adding a password
@@ -43,6 +45,10 @@
 #### Getting a password
 
     $ passman get <site>
+
+#### Deleting a password
+
+    $ passman del <site>
 
 #### Filling forms
 

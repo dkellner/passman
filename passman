@@ -104,10 +104,10 @@ function fillbrowser
     password=${login#* }
 
     if [[ -n "$user" ]]; then
-        xdotool type "$user"
+        xdotool type -- "$user"
         xdotool key Tab
     fi
-    xdotool type "$password"
+    xdotool type -- "$password"
     xdotool key Return
 }
 

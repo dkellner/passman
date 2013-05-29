@@ -26,7 +26,7 @@
 
         $ gpg -e -r <gpg_identity> <password_file>
 
-3. Modify the two variables $PASSFILE and $GPG_IDENTITY in the *passman* script to your needs.
+3. Modify the two variables $PASS_FILE and $GPG_IDENTITY in the *passman* script to your needs.
 
 4. For convencience set up a GPG-Agent which caches your GPG credentials for some time.
 

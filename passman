@@ -20,7 +20,7 @@
 # ======================================================================
 # Edit the following two variables to your needs
 #
-# $PASSFILE optimally should contain an absolute path, because it is not 
+# $PASS_FILE optimally should contain an absolute path, because it is not 
 # guaranteed that the script gets called from the same directory
 # The plain password file contains entries in the form sitename,user,password
 # and may be encrypted with the following command: 
@@ -31,9 +31,12 @@
 #
 # $GPG_IDENTITY is your personal GPG identity you want to 
 # crypt the password file with.
+#
+# $PASS_LENGTH determines the length of generated passwords.
 
-PASSFILE='' #FILL ME
+PASS_FILE='' #FILL ME
 GPG_IDENTITY='' #FILL ME
+PASS_LENGTH='15'
 # ======================================================================
 
 
@@ -41,14 +44,14 @@ GPG_IDENTITY='' #FILL ME
 # Returns all keys present in the password file.
 function getkeys
 {
-    gpg --no-tty --quiet -q -d $PASSFILE | awk -F, '{print $1}' 
+    gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F, '{print $1}' 
 }
 
 # Gets a login as a string "user pass".
 function get
 {
     if [[ -n "$1" ]]; then
-        gpg --no-tty --quiet -q -d $PASSFILE | grep "^$1," | awk -F, '{print $2, $3}' 
+        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep "^$1," | awk -F, '{print $2, $3}' 
     fi
 }
 
@@ -62,7 +65,7 @@ function add
     elif [[ $# -eq 2 ]]; then
         site=$1
         user=$2
-        pass=$(pwgen -n1)
+        pass=$(pwgen -s1 "$PASS_LENGTH")
         echo "generated password for $user: $pass"
     elif [[ $# -lt 2 ]]; then
         echo "not enough arguments specified..."
@@ -71,12 +74,12 @@ function add
 
     line=$site,$user,$pass
 
-    passes=$(gpg --no-tty --quiet -d $PASSFILE)
+    passes=$(gpg --no-tty --quiet -d "$PASS_FILE")
 
     if [[ $? -eq 0 ]]; then
         passes+='\n'
         passes+=$line
-        echo -e "$passes" | gpg -e -r $GPG_IDENTITY > $PASSFILE
+        echo -e "$passes" | gpg -e -r $GPG_IDENTITY > "$PASS_FILE"
     fi
 }
 
@@ -84,10 +87,10 @@ function add
 function del
 {
     if [[ -n "$1" ]]; then
-        passes=$(gpg --no-tty --quiet -d $PASSFILE | sed "/^$1,/d")
+        passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$1,/d")
 
         if [[ $? -eq 0 ]]; then
-            echo -e "$passes" | gpg -e -r $GPG_IDENTITY > $PASSFILE
+            echo -e "$passes" | gpg -e -r $GPG_IDENTITY > "$PASS_FILE"
         fi
     fi
 }

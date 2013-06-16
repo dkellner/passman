@@ -103,6 +103,11 @@ function fillbrowser
     key=$(echo "$keys" | dmenu -p "Select:")
 
     login=$(get $key)
+
+    if [[ -z "$login" ]]; then
+        return
+    fi
+
     user=${login% *}
     password=${login#* }
 

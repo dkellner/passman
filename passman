@@ -23,14 +23,20 @@
 # $PASS_FILE optimally should contain an absolute path, because it is not 
 # guaranteed that the script gets called from the same directory
 # The plain password file contains entries in the form sitename,user,password
-# and may be encrypted with the following command: 
+# and may be encrypted either with
 # 
-# gpg -e -r <gpg_identity> <password_file>
+# gpg --encrypt --recipient <gpg_identity> <plain_password_file>
 #
+# when using public-key cryptography or with
+#
+# gpg --symmetric --cipher-algo AES256 <plain_password_file>
+#
+# when using symmetric cryptography which does not require a private key.
 # A plain text sample file is distributed in this directory: sample-passwords.txt
 #
-# $GPG_IDENTITY is your personal GPG identity you want to 
-# crypt the password file with.
+# $GPG_IDENTITY is your personal GPG identity you want to encrypt the 
+# password file with. If this variable is set, public-key cryptography will
+# be used. If it is not set, symmetric cryptography will be used instead.
 #
 # $PASS_LENGTH determines the length of generated passwords.
 
@@ -44,7 +50,7 @@ PASS_LENGTH='15'
 # Returns all keys present in the password file.
 function getkeys
 {
-    gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F, '{print $1}' 
+    gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F, '{print $1}' | sort
 }
 
 # Gets a login as a string "user pass".
@@ -79,7 +85,7 @@ function add
     if [[ $? -eq 0 ]]; then
         passes+='\n'
         passes+=$line
-        echo -e "$passes" | gpg -e -r $GPG_IDENTITY > "$PASS_FILE"
+        echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
     fi
 }
 
@@ -90,7 +96,7 @@ function del
         passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$1,/d")
 
         if [[ $? -eq 0 ]]; then
-            echo -e "$passes" | gpg -e -r $GPG_IDENTITY > "$PASS_FILE"
+            echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
         fi
     fi
 }
@@ -118,6 +124,16 @@ function fillbrowser
     xdotool type -- "$password"
     xdotool key Return
 }
+
+
+
+
+# Set up GPG identity. Use symmetric cipher if $GPG_IDENTITY has not been set.
+if [[ -z "$GPG_IDENTITY" ]]; then
+    GPG_OPTS='--yes --symmetric --cipher-algo AES256'
+else
+    GPG_OPTS="--yes --encrypt --recipient $GPG_IDENTITY"
+fi
 
 # This has to be done to allow empty parameters (e.g. for user-less logins).
 params=''

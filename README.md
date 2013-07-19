@@ -3,6 +3,7 @@
 ## Features
 
 * Strong encryption via GPG
+* Support for either public-key or symmetric encryption
 * Add, get and delete passwords with simple commands
 * Easy web browser / login forms support via *dmenu* and *xdotool*
 
@@ -22,13 +23,19 @@
 
         site,user,pass
 
-    and encrypt it with the following command
+    and encrypt it with one of the two following commands
 
-        $ gpg -e -r <gpg_identity> <password_file>
+        $ gpg --encrypt --recipient <gpg_identity> <plain_password_file>
 
-3. Modify the two variables $PASS_FILE and $GPG_IDENTITY in the *passman* script to your needs.
+    if you prefer to use your own private key or
 
-4. For convencience set up a GPG-Agent which caches your GPG credentials for some time.
+        $ gpg --symmetric --cipher-algo AES256 <plain_password_file>
+
+    if you want to use symmetric encryption without a private key.
+
+3. Modify the two variables $PASS_FILE and $GPG_IDENTITY in the *passman* script to your needs. You may leave $GPG_IDENTITY empty. In this case symmetric encryption will be used.
+
+4. For convenience set up a GPG-Agent which caches your GPG credentials for some time.
 
 ### Running
 

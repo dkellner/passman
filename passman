@@ -110,10 +110,16 @@ function autotype
 }
 
 # Fills credentials by selecting the desired site with dmenu in a (e.g. browser) form
+# First argument : site to submit (optional)
+# If first argument is empty, dmenu will pop up
 function submitform
 {
-    keys=$(getkeys)
-    key=$(echo "$keys" | dmenu -p "Select:")
+    if [[ -n "$1" ]]; then
+        key="$1"
+    else
+        keys=$(getkeys)
+        key=$(echo "$keys" | dmenu -p "Select:")
+    fi
 
     login=$(get "$key")
 
@@ -127,6 +133,44 @@ function submitform
     autotype "$user" "$password"
 }
 
+# Try to match site key against current window name
+# If one key matches, the credentials will auto-type automatically
+# If more than one key matches, dmenu pops up to choose between them
+# If no key matches, standard dmenu will pop up
+function autosubmitform
+{
+    windowname=$(xdotool getwindowfocus getwindowname)
+
+    keys=$(getkeys)
+    matches=()
+    for key in $keys; do
+        echo "$windowname" | grep -i "$key" > /dev/null
+        if [[ $? -eq 0 ]]; then
+            matches+=( "$key" )
+        fi
+    done 
+
+    numMatches=${#matches[@]};
+
+    case $numMatches in
+        0)
+            submitform
+            ;;
+        1)
+            submitform "${matches[0]}"
+            ;;
+        *)
+            # trick the IFS to output array items as separate lines for dmenu
+            OLDIFS="$IFS"; IFS=$'\n'
+            key=$(echo "${matches[*]}" | dmenu -p "Select:")
+            IFS="$OLDIFS"
+            if [[ -z "$key" ]]; then 
+                return; 
+            fi
+            submitform "$key"
+            ;;
+    esac
+}
 
 
 

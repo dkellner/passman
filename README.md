@@ -5,7 +5,7 @@
 * Strong encryption via GPG
 * Support for either public-key or symmetric encryption
 * Add, get and delete passwords with simple commands
-* Easy web browser / login forms support via *dmenu* and *xdotool*
+* Easy web browser / login forms support
 
 ## Usage
 
@@ -51,12 +51,16 @@
 
     $ passman del <site>
 
-#### Filling forms
+#### Filling forms (always display dmenu chooser)
 
     $ passman submitform
 
 A dmenu dialog will pop up, let you chose the desired entry and enter the credentials via xdotool
 in the form "user<TAB>password<RETURN>" or "password<RETURN>" if there is no user for an entry.
+
+#### Filling forms (automatically try to match site key against current window name)
+
+    $ passman autosubmitform
 
 You may map this command to an easy system-wide keyboard shortcut to save time when filling out
 browser login forms.

@@ -39,11 +39,25 @@ function getkeys
     gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F'\t' '{print $1}' | sort
 }
 
+# Returns all keys and additionally auto-type hints if present
+function getkeyshints
+{
+    gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F'\t' '{print $1, $4}' OFS='\t' | sort
+}
+
 # Gets a login as a string "user<TAB>pass".
 function get
 {
     if [[ -n "$1" ]]; then
         gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $2, $3}' OFS='\t'
+    fi
+}
+
+# Gets the hint for a login.
+function gethint
+{
+    if [[ -n "$1" ]]; then
+        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $4}'
     fi
 }
 
@@ -79,7 +93,7 @@ function add
 
     if [[ $? -eq 0 ]]; then
         passes+='\n'
-        passes+=$line
+        passes+="$line"
         echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
     fi
 }
@@ -91,6 +105,40 @@ function del
         passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$1	/d")
 
         if [[ $? -eq 0 ]]; then
+            echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
+        fi
+    fi
+}
+
+# Set auto type hint for specific entry
+# First argument: entry key
+# Second argument: hint to set
+function sethint
+{
+    if [[ -n "$1" ]]; then
+        login=$(get "$1")
+
+        if [[ -z "$login" ]]; then
+            echo "Key '$1' not found."
+            return
+        fi
+
+        if [[ -z "$2" ]]; then
+            echo "No regex specified."
+            return
+        fi
+
+        user=${login%	*}
+        password=${login#*	}
+
+        regex=$(echo "$2" | tr -d '\t')
+        line="$1\\t$user\\t$password\\t$regex"
+
+        passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$1	/d")
+
+        if [[ $? -eq 0 ]]; then
+            passes+='\n'
+            passes+="$line"
             echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
         fi
     fi
@@ -141,14 +189,24 @@ function autosubmitform
 {
     windowname=$(xdotool getwindowfocus getwindowname)
 
-    keys=$(getkeys)
+    keyshints=$(getkeyshints)
+
     matches=()
-    for key in $keys; do
-        echo "$windowname" | grep -i "$key" > /dev/null
+    OLDIFS="$IFS"; IFS=$'\n'
+    for keyhint in $keyshints; do
+        key=${keyhint%	*}
+        hint=${keyhint#*	}
+
+        if [[ -z "$hint" ]]; then
+            hint="$key"
+        fi
+
+        echo "$windowname" | grep -Ei "$hint" > /dev/null
         if [[ $? -eq 0 ]]; then
             matches+=( "$key" )
         fi
     done 
+    IFS="$OLDIFS"
 
     numMatches=${#matches[@]};
 

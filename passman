@@ -15,37 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+if [[ -f "$SCRIPT_DIR/config" ]]; then
+	. "$SCRIPT_DIR/config"
+else
+	echo "In order to use passman, you need to set configuration options in the file $SCRIPT_DIR/config"
+	exit 1
+fi
 
-# ======================================================================
-# Edit the following two variables to your needs
-#
-# $PASS_FILE optimally should contain an absolute path, because it is not 
-# guaranteed that the script gets called from the same directory
-# The plain password file contains entries in the form sitename,user,password
-# and may be encrypted either with
-# 
-# gpg --encrypt --recipient <gpg_identity> <plain_password_file>
-#
-# when using public-key cryptography or with
-#
-# gpg --symmetric --cipher-algo AES256 <plain_password_file>
-#
-# when using symmetric cryptography which does not require a private key.
-# A plain text sample file is distributed in this directory: sample-passwords.txt
-#
-# $GPG_IDENTITY is your personal GPG identity you want to encrypt the 
-# password file with. If this variable is set, public-key cryptography will
-# be used. If it is not set, symmetric cryptography will be used instead.
-#
-# $PASS_LENGTH determines the length of generated passwords.
+if [[ ! -f "$PASS_FILE" ]]; then
+	echo "Password file $PASS_FILE not found!"
+	exit 1
+fi
 
-PASS_FILE='' #FILL ME
-GPG_IDENTITY='' #FILL ME
-PASS_LENGTH='15'
-# ======================================================================
-
-
+if [[ -z "$PASS_LENGTH" ]]; then
+	PASS_LENGTH='15'
+fi
 
 # Returns all keys present in the password file.
 function getkeys

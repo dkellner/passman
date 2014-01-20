@@ -6,6 +6,7 @@
 * Support for either public-key or symmetric encryption
 * Add, get and delete passwords with simple commands
 * Easy web browser / login forms support
+* Custom regular expression for matching windows
 
 ## Usage
 
@@ -64,6 +65,16 @@ in the form "user<TAB>password<RETURN>" or "password<RETURN>" if there is no use
 
 You may map this command to an easy system-wide keyboard shortcut to save time when filling out
 browser login forms.
+
+#### Setting a regular expression hint for a specific entry
+
+    $ passman sethint <site> '<regex>'
+
+Be sure to quote the regex with single quotes to avoid false interpretations of your shell.
+
+#### Query the regular expression hint for a specific entry
+
+    $ passman gethint <site>
 
 ## License
 

@@ -36,14 +36,14 @@ fi
 # Returns all keys present in the password file.
 function getkeys
 {
-    gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F, '{print $1}' | sort
+    gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F'\t' '{print $1}' | sort
 }
 
-# Gets a login as a string "user pass".
+# Gets a login as a string "user<TAB>pass".
 function get
 {
     if [[ -n "$1" ]]; then
-        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep "^$1," | awk -F, '{print $2, $3}' 
+        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $2, $3}' OFS='\t'
     fi
 }
 
@@ -64,7 +64,7 @@ function add
         return
     fi
 
-    line=$site,$user,$pass
+    line="$site\\t$user\\t$pass"
 
     passes=$(gpg --no-tty --quiet -d "$PASS_FILE")
 
@@ -79,7 +79,7 @@ function add
 function del
 {
     if [[ -n "$1" ]]; then
-        passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$1,/d")
+        passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$1	/d")
 
         if [[ $? -eq 0 ]]; then
             echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
@@ -88,7 +88,7 @@ function del
 }
 
 # Fills credentials by selecting the desired site with dmenu in a browser form
-# by typing the credentials with user<tab>password<enter>.
+# by typing the credentials with user<TAB>password<enter>.
 function fillbrowser
 {
     keys=$(getkeys)
@@ -100,8 +100,8 @@ function fillbrowser
         return
     fi
 
-    user=${login% *}
-    password=${login#* }
+    user=${login%	*}
+    password=${login#*	}
 
     if [[ -n "$user" ]]; then
         xdotool type -- "$user"

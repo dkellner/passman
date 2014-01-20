@@ -21,7 +21,7 @@
 
 2. Create a plain password file with entries on each line like
 
-        site,user,pass
+        site<TAB>user<TAB>pass
 
     and encrypt it with one of the two following commands
 
@@ -62,7 +62,7 @@
     $ passman fillbrowser
 
 A dmenu dialog will pop up, let you chose the desired entry and enter the credentials via xdotool
-in the form "user<tab>password<enter>" or "password<enter>" if there is no user for an entry.
+in the form "user<TAB>password<RETURN>" or "password<RETURN>" if there is no user for an entry.
 
 You may map this command to an easy system-wide keyboard shortcut to save time when filling out
 browser login forms.

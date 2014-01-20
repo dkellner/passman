@@ -33,7 +33,7 @@
 
     if you want to use symmetric encryption without a private key.
 
-3. Modify the two variables $PASS_FILE and $GPG_IDENTITY in the *passman* script to your needs. You may leave $GPG_IDENTITY empty. In this case symmetric encryption will be used.
+3. Copy the file *config.dist* to *config* and modify the two variables $PASS_FILE and $GPG_IDENTITY to your needs. You may leave $GPG_IDENTITY empty. In this case symmetric encryption will be used.
 
 4. For convenience set up a GPG-Agent which caches your GPG credentials for some time.
 

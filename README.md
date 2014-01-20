@@ -53,7 +53,7 @@
 
 #### Filling forms
 
-    $ passman fillbrowser
+    $ passman submitform
 
 A dmenu dialog will pop up, let you chose the desired entry and enter the credentials via xdotool
 in the form "user<TAB>password<RETURN>" or "password<RETURN>" if there is no user for an entry.

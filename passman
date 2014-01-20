@@ -50,18 +50,27 @@ function get
 # Adds an entry to the password file.
 function add
 {
-    if [[ $# -eq 3 ]]; then
-        site=$1
-        user=$2
-        pass=$3
-    elif [[ $# -eq 2 ]]; then
-        site=$1
-        user=$2
+
+	IFS= read -r -p "Identifier: " site
+	site=$(echo "$site" | sed -e 's/^ *//g' -e 's/ *$//g') #remove leading/trailing whitespaces
+	if [[ -z "$site" ]]; then
+		echo "Please specify a site identifier."
+		exit 1
+	fi
+
+	IFS= read -p "Username (optional): " user
+	IFS= read -r -s -p "Password (will not be echoed): " pass
+	echo
+
+	echo -e "$site$user$pass" | grep -P '\t' > /dev/null
+	if [[ $? -eq 0 ]]; then
+		echo "All values must NOT contain any <TAB> characters."
+		exit 1
+	fi
+
+    if [[ -z "$pass" ]]; then
         pass=$(pwgen -s1 "$PASS_LENGTH")
-        echo "generated password for $user: $pass"
-    elif [[ $# -lt 2 ]]; then
-        echo "not enough arguments specified..."
-        return
+        echo "Generated password for $user: $pass"
     fi
 
     line="$site\\t$user\\t$pass"
@@ -94,7 +103,7 @@ function fillbrowser
     keys=$(getkeys)
     key=$(echo "$keys" | dmenu -p "Select:")
 
-    login=$(get $key)
+    login=$(get "$key")
 
     if [[ -z "$login" ]]; then
         return

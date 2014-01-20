@@ -96,9 +96,21 @@ function del
     fi
 }
 
-# Fills credentials by selecting the desired site with dmenu in a browser form
-# by typing the credentials with user<TAB>password<enter>.
-function fillbrowser
+# Types the credentials as user<TAB>password<enter>.
+# First argument : user
+# Second argument: password
+function autotype
+{
+    if [[ -n "$1" ]]; then
+        xdotool type -- "$1"
+        xdotool key Tab
+    fi
+    xdotool type -- "$2"
+    xdotool key Return
+}
+
+# Fills credentials by selecting the desired site with dmenu in a (e.g. browser) form
+function submitform
 {
     keys=$(getkeys)
     key=$(echo "$keys" | dmenu -p "Select:")
@@ -112,12 +124,7 @@ function fillbrowser
     user=${login%	*}
     password=${login#*	}
 
-    if [[ -n "$user" ]]; then
-        xdotool type -- "$user"
-        xdotool key Tab
-    fi
-    xdotool type -- "$password"
-    xdotool key Return
+    autotype "$user" "$password"
 }
 
 

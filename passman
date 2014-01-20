@@ -150,10 +150,10 @@ function sethint
 function autotype
 {
     if [[ -n "$1" ]]; then
-        xdotool type -- "$1"
+        xdotool type --delay 50 -- "$1"
         xdotool key Tab
     fi
-    xdotool type -- "$2"
+    xdotool type --delay 50 -- "$2"
     xdotool key Return
 }
 

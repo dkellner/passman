@@ -49,7 +49,11 @@ function getkeyshints
 function get
 {
     if [[ -n "$1" ]]; then
-        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $2, $3}' OFS='\t'
+        if [[ -z "$ONLY_PW" ]]; then        
+            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $2, $3}' OFS='\t'
+        else
+            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $3}'
+        fi
     fi
 }
 
@@ -149,7 +153,7 @@ function sethint
 # Second argument: password
 function autotype
 {
-    if [[ -n "$1" ]]; then
+    if [[ -n "$1" ]] && [[ -z "$ONLY_PW" ]]; then
         xdotool type --delay 50 -- "$1"
         xdotool key Tab
     fi
@@ -230,6 +234,14 @@ function autosubmitform
     esac
 }
 
+# Call "passman onlypw <action> <params>" as you would call passman normally with "passman <action> <params>"
+# This will only type the password without username.
+function onlypw
+{
+    export ONLY_PW=1
+    eval "$@"
+}
+
 
 
 # Set up GPG identity. Use symmetric cipher if $GPG_IDENTITY has not been set.
@@ -239,12 +251,5 @@ else
     GPG_OPTS="--yes --encrypt --recipient $GPG_IDENTITY"
 fi
 
-# This has to be done to allow empty parameters (e.g. for user-less logins).
-params=''
-for i in "$@"
-do
-    params="$params '$i'"
-done
-
 # The script parameters determine which method gets called.
-eval "$params"
+eval "$@"

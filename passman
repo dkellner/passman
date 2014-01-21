@@ -251,5 +251,12 @@ else
     GPG_OPTS="--yes --encrypt --recipient $GPG_IDENTITY"
 fi
 
+# This has to be done to allow empty parameters (e.g. for user-less logins).
+params=''
+for i in "$@"
+do
+params="$params '$i'"
+done
+
 # The script parameters determine which method gets called.
-eval "$@"
+eval "$params"

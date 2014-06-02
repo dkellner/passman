@@ -102,7 +102,7 @@ function add
     if [[ $? -eq 0 ]]; then
         passes+='\n'
         passes+="$line"
-        echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
+        echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
     fi
 }
 
@@ -115,7 +115,7 @@ function del
         local passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$key	/d")
 
         if [[ $? -eq 0 ]]; then
-            echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
+            echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
         fi
     fi
 }
@@ -151,7 +151,7 @@ function sethint
         if [[ $? -eq 0 ]]; then
             passes+='\n'
             passes+="$line"
-            echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
+            echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
         fi
     fi
 }
@@ -259,7 +259,7 @@ function onlypw
 if [[ -z "$GPG_IDENTITY" ]]; then
     GPG_OPTS='--yes --symmetric --cipher-algo AES256'
 else
-    GPG_OPTS="--yes --encrypt --recipient $GPG_IDENTITY"
+    GPG_OPTS="--yes --encrypt --recipient '$GPG_IDENTITY'"
 fi
 
 # This has to be done to allow empty parameters (e.g. for user-less logins).

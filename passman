@@ -112,7 +112,7 @@ function del
 {
     local key="$1"
     if [[ -n "$key" ]]; then
-        passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$key	/d")
+        local passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$key	/d")
 
         if [[ $? -eq 0 ]]; then
             echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"

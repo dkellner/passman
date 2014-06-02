@@ -36,23 +36,27 @@ fi
 # Returns all keys present in the password file.
 function getkeys
 {
-    gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F'\t' '{print $1}' | sort
+    # gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F'\t' '{print $1}' | sort
+    gpg --no-tty --quiet -q -d "$PASS_FILE" | cut -f 1 | sort
 }
 
 # Returns all keys and additionally auto-type hints if present
 function getkeyshints
 {
-    gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F'\t' '{print $1, $4}' OFS='\t' | sort
+    # gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F'\t' '{print $1, $4}' OFS='\t' | sort
+    gpg --no-tty --quiet -q -d "$PASS_FILE" | cut -f 1,4 | sort
 }
 
 # Gets a login as a string "user<TAB>pass".
 function get
 {
     if [[ -n "$1" ]]; then
-        if [[ -z "$ONLY_PW" ]]; then        
-            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $2, $3}' OFS='\t'
+        if [[ -z "$ONLY_PW" ]]; then
+            # gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $2, $3}' OFS='\t'
+            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | cut -f 2,3
         else
-            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $3}'
+            # gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $3}'
+            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | cut -f 3
         fi
     fi
 }
@@ -61,7 +65,7 @@ function get
 function gethint
 {
     if [[ -n "$1" ]]; then
-        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $4}'
+        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | cut -f 4
     fi
 }
 
@@ -209,7 +213,7 @@ function autosubmitform
         if [[ $? -eq 0 ]]; then
             matches+=( "$key" )
         fi
-    done 
+    done
     IFS="$OLDIFS"
 
     numMatches=${#matches[@]};
@@ -226,8 +230,8 @@ function autosubmitform
             OLDIFS="$IFS"; IFS=$'\n'
             key=$(echo "${matches[*]}" | dmenu -p "Select:")
             IFS="$OLDIFS"
-            if [[ -z "$key" ]]; then 
-                return; 
+            if [[ -z "$key" ]]; then
+                return;
             fi
             submitform "$key"
             ;;

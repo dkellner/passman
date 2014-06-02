@@ -36,36 +36,36 @@ fi
 # Returns all keys present in the password file.
 function getkeys
 {
-    # gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F'\t' '{print $1}' | sort
     gpg --no-tty --quiet -q -d "$PASS_FILE" | cut -f 1 | sort
 }
 
 # Returns all keys and additionally auto-type hints if present
 function getkeyshints
 {
-    # gpg --no-tty --quiet -q -d "$PASS_FILE" | awk -F'\t' '{print $1, $4}' OFS='\t' | sort
     gpg --no-tty --quiet -q -d "$PASS_FILE" | cut -f 1,4 | sort
 }
 
 # Gets a login as a string "user<TAB>pass".
+# First argument: entry key
 function get
 {
-    if [[ -n "$1" ]]; then
+    local key="$1"
+    if [[ -n "$key" ]]; then
         if [[ -z "$ONLY_PW" ]]; then
-            # gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $2, $3}' OFS='\t'
-            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | cut -f 2,3
+            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$key\t" | cut -f 2,3
         else
-            # gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | awk -F'\t' '{print $3}'
-            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | cut -f 3
+            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$key\t" | cut -f 3
         fi
     fi
 }
 
 # Gets the hint for a login.
+# First argument: entry key
 function gethint
 {
-    if [[ -n "$1" ]]; then
-        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$1\t" | cut -f 4
+    local key="$1"
+    if [[ -n "$key" ]]; then
+        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$key\t" | cut -f 4
     fi
 }
 
@@ -74,7 +74,7 @@ function add
 {
 
 	IFS= read -r -p "Identifier: " site
-	site=$(echo "$site" | sed -e 's/^ *//g' -e 's/ *$//g') #remove leading/trailing whitespaces
+	local site=$(echo "$site" | sed -e 's/^ *//g' -e 's/ *$//g') # remove leading/trailing whitespaces
 	if [[ -z "$site" ]]; then
 		echo "Please specify a site identifier."
 		exit 1
@@ -91,13 +91,13 @@ function add
 	fi
 
     if [[ -z "$pass" ]]; then
-        pass=$(pwgen -s1 "$PASS_LENGTH")
+        local pass=$(pwgen -s1 "$PASS_LENGTH")
         echo "Generated password for $user: $pass"
     fi
 
-    line="$site\\t$user\\t$pass"
+    local line="$site\\t$user\\t$pass"
 
-    passes=$(gpg --no-tty --quiet -d "$PASS_FILE")
+    local passes=$(gpg --no-tty --quiet -d "$PASS_FILE")
 
     if [[ $? -eq 0 ]]; then
         passes+='\n'
@@ -107,10 +107,12 @@ function add
 }
 
 # Deletes an entry from the password file
+# First argument: entry key
 function del
 {
-    if [[ -n "$1" ]]; then
-        passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$1	/d")
+    local key="$1"
+    if [[ -n "$key" ]]; then
+        passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$key	/d")
 
         if [[ $? -eq 0 ]]; then
             echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
@@ -123,26 +125,28 @@ function del
 # Second argument: hint to set
 function sethint
 {
-    if [[ -n "$1" ]]; then
-        login=$(get "$1")
+    local key="$1"
+    local hint="$2"
+    if [[ -n "$key" ]]; then
+        local login=$(get "$key")
 
         if [[ -z "$login" ]]; then
-            echo "Key '$1' not found."
+            echo "Key '$key' not found."
             return
         fi
 
-        if [[ -z "$2" ]]; then
+        if [[ -z "$hint" ]]; then
             echo "No regex specified."
             return
         fi
 
-        user=${login%	*}
-        password=${login#*	}
+        local user=${login%	*}
+        local password=${login#*	}
 
-        regex=$(echo "$2" | tr -d '\t')
-        line="$1\\t$user\\t$password\\t$regex"
+        local regex=$(echo "$hint" | tr -d '\t')
+        local line="$key\\t$user\\t$password\\t$regex"
 
-        passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$1	/d")
+        local passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$key	/d")
 
         if [[ $? -eq 0 ]]; then
             passes+='\n'
@@ -157,11 +161,13 @@ function sethint
 # Second argument: password
 function autotype
 {
-    if [[ -n "$1" ]] && [[ -z "$ONLY_PW" ]]; then
-        xdotool type --delay 50 -- "$1"
+    local user="$1"
+    local password="$2"
+    if [[ -n "$user" ]] && [[ -z "$ONLY_PW" ]]; then
+        xdotool type --delay 50 -- "$user"
         xdotool key Tab
     fi
-    xdotool type --delay 50 -- "$2"
+    xdotool type --delay 50 -- "$password"
     xdotool key Return
 }
 
@@ -170,6 +176,7 @@ function autotype
 # If first argument is empty, dmenu will pop up
 function submitform
 {
+    local key
     if [[ -n "$1" ]]; then
         key="$1"
     else
@@ -177,14 +184,14 @@ function submitform
         key=$(echo "$keys" | dmenu -p "Select:")
     fi
 
-    login=$(get "$key")
+    local login=$(get "$key")
 
     if [[ -z "$login" ]]; then
         return
     fi
 
-    user=${login%	*}
-    password=${login#*	}
+    local user=${login%	*}
+    local password=${login#*	}
 
     autotype "$user" "$password"
 }
@@ -195,15 +202,15 @@ function submitform
 # If no key matches, standard dmenu will pop up
 function autosubmitform
 {
-    windowname=$(xdotool getwindowfocus getwindowname)
+    local windowname=$(xdotool getwindowfocus getwindowname)
 
-    keyshints=$(getkeyshints)
+    local keyshints=$(getkeyshints)
 
-    matches=()
+    local matches=()
     OLDIFS="$IFS"; IFS=$'\n'
     for keyhint in $keyshints; do
-        key=${keyhint%	*}
-        hint=${keyhint#*	}
+        local key=${keyhint%	*}
+        local hint=${keyhint#*	}
 
         if [[ -z "$hint" ]]; then
             hint="$key"
@@ -216,7 +223,7 @@ function autosubmitform
     done
     IFS="$OLDIFS"
 
-    numMatches=${#matches[@]};
+    local numMatches=${#matches[@]};
 
     case $numMatches in
         0)
@@ -227,8 +234,8 @@ function autosubmitform
             ;;
         *)
             # trick the IFS to output array items as separate lines for dmenu
-            OLDIFS="$IFS"; IFS=$'\n'
-            key=$(echo "${matches[*]}" | dmenu -p "Select:")
+            local OLDIFS="$IFS"; IFS=$'\n'
+            local key=$(echo "${matches[*]}" | dmenu -p "Select:")
             IFS="$OLDIFS"
             if [[ -z "$key" ]]; then
                 return;

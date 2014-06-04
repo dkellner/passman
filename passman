@@ -15,16 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+function read_passes
+{
+    if [ -s "$PASS_FILE" ]; then
+        gpg --no-tty --quiet -d "$PASS_FILE"
+    else
+        echo -n ''
+    fi
+}
+
 # Returns all keys present in the password file.
 function getkeys
 {
-    gpg --no-tty --quiet -q -d "$PASS_FILE" | cut -f 1 | sort
+    read_passes | cut -f 1 | sort
 }
 
 # Returns all keys and additionally auto-type hints if present
 function getkeyshints
 {
-    gpg --no-tty --quiet -q -d "$PASS_FILE" | cut -f 1,4 | sort
+    read_passes | cut -f 1,4 | sort
 }
 
 # Gets a login as a string "user<TAB>pass".
@@ -34,9 +43,9 @@ function get
     local key="$1"
     if [[ -n "$key" ]]; then
         if [[ -z "$ONLY_PW" ]]; then
-            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$key\t" | cut -f 2,3
+            read_passes | grep -P "^$key\t" | cut -f 2,3
         else
-            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$key\t" | cut -f 3
+            read_passes | grep -P "^$key\t" | cut -f 3
         fi
     fi
 }
@@ -47,7 +56,7 @@ function gethint
 {
     local key="$1"
     if [[ -n "$key" ]]; then
-        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$key\t" | cut -f 4
+        read_passes | grep -P "^$key\t" | cut -f 4
     fi
 }
 
@@ -79,10 +88,12 @@ function add
 
     local line="$site\\t$user\\t$pass"
 
-    local passes=$(gpg --no-tty --quiet -d "$PASS_FILE")
+    local passes=$(read_passes)
 
     if [[ $? -eq 0 ]]; then
-        passes+='\n'
+        if [ -n "$passes" ]; then
+            passes+='\n'
+        fi
         passes+="$line"
         echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
     fi
@@ -94,7 +105,7 @@ function del
 {
     local key="$1"
     if [[ -n "$key" ]]; then
-        local passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$key	/d")
+        local passes=$(read_passes | sed "/^$key	/d")
 
         if [[ $? -eq 0 ]]; then
             echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
@@ -128,7 +139,7 @@ function sethint
         local regex=$(echo "$hint" | tr -d '\t')
         local line="$key\\t$user\\t$password\\t$regex"
 
-        local passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$key	/d")
+        local passes=$(read_passes | sed "/^$key	/d")
 
         if [[ $? -eq 0 ]]; then
             passes+='\n'
@@ -254,10 +265,6 @@ if [[ -f "$CONFIG_PATH" ]]; then
 else
     echo -n "In order to use passman, you need to set configuration options in "
     echo "the file $CONFIG_PATH"
-    exit 1
-fi
-if [[ ! -f "$PASS_FILE" ]]; then
-    echo "Password file $PASS_FILE not found!"
     exit 1
 fi
 if [[ -z "$PASS_LENGTH" ]]; then

@@ -15,24 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SCRIPT_DIR="$( cd "$( dirname "$(readlink -f ${BASH_SOURCE[0]})" )" && pwd -P )"
-
-if [[ -f "$SCRIPT_DIR/config" ]]; then
-	. "$SCRIPT_DIR/config"
-else
-	echo "In order to use passman, you need to set configuration options in the file $SCRIPT_DIR/config"
-	exit 1
-fi
-
-if [[ ! -f "$PASS_FILE" ]]; then
-	echo "Password file $PASS_FILE not found!"
-	exit 1
-fi
-
-if [[ -z "$PASS_LENGTH" ]]; then
-	PASS_LENGTH='15'
-fi
-
 # Returns all keys present in the password file.
 function getkeys
 {
@@ -253,7 +235,34 @@ function onlypw
     eval "$@"
 }
 
+# Parse command line arguments.
+while getopts c: opt; do
+    case $opt in
+        c)
+            export CONFIG_PATH=$OPTARG
+            ;;
+    esac
+done
+shift `expr $OPTIND - 1`
 
+# Read and verify config.
+if [ -z "$CONFIG_PATH" ]; then
+    CONFIG_PATH="$HOME/.passman/config"
+fi
+if [[ -f "$CONFIG_PATH" ]]; then
+    . "$CONFIG_PATH"
+else
+    echo -n "In order to use passman, you need to set configuration options in "
+    echo "the file $CONFIG_PATH"
+    exit 1
+fi
+if [[ ! -f "$PASS_FILE" ]]; then
+    echo "Password file $PASS_FILE not found!"
+    exit 1
+fi
+if [[ -z "$PASS_LENGTH" ]]; then
+    PASS_LENGTH='15'
+fi
 
 # Set up GPG identity. Use symmetric cipher if $GPG_IDENTITY has not been set.
 if [[ -z "$GPG_IDENTITY" ]]; then

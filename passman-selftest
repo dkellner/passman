@@ -1,0 +1,234 @@
+#!/bin/bash
+
+# Copyright 2014 Dominik Kellner
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+TEST_CONFIG_FILE=/tmp/passman-selftest-config
+TEST_PASS_FILE=/tmp/passman-selftest-passfile.gpg
+
+PASSMAN="`dirname $0`/passman -c '$TEST_CONFIG_FILE'"
+
+NEWLINE='
+'
+
+function test_passman
+{
+    print_introduction
+    setup_test_config
+    run_all_tests
+}
+
+function print_introduction
+{
+    echo "Welcome to the passman self-test. This is a small utility verifying "
+    echo "that your passman installation is working correctly."
+    echo
+    echo "Running this self-test will not change any of your passman config "
+    echo "or your already stored passwords."
+    echo
+    echo "The first tests will run without user interaction. For some tests, a "
+    echo "menu will appear at the top of the screen and the self-test will "
+    echo "require you to choose certain items. There will be detailed "
+    echo "instructions when this happens."
+    echo
+    echo "Good luck."
+    echo
+    read -p "Ready? [Y|n] " ready
+    if [ "$ready" = "n" ]; then
+        exit 1
+    fi
+}
+
+function setup_test_config
+{
+    cat "$CONFIG_PATH" | sed "/^PASS_FILE=/d" > "$TEST_CONFIG_FILE"
+    echo "PASS_FILE='$TEST_PASS_FILE'" >> "$TEST_CONFIG_FILE"
+}
+
+function run_all_tests
+{
+    run_test "test_add_and_get"
+    run_test "test_getkeys"
+    run_test "test_sethint_and_gethint"
+    run_test "test_getkeyshints"
+    run_test "test_del"
+    run_test "test_submitform_with_username"
+    run_test "test_submitform_without_username"
+    run_test "test_submitform_no_output_on_escape"
+    run_test "test_submitform_with_argument"
+}
+
+function run_test
+{
+    export TEST_ERROR=''
+    rm -f "$TEST_PASS_FILE"
+    RESTORE='\033[0m'
+    WHITE_BOLD='\033[01;37m'
+    GREEN_BOLD='\033[01;32m'
+    RED_BOLD='\033[01;31m'
+    YELLOW_BOLD='\033[01;33m'
+    echo
+    echo -e "${YELLOW_BOLD}* ${WHITE_BOLD}$1${RESTORE}"
+    eval $1
+    if [ $? -eq 0 ]; then
+        echo -e "${YELLOW_BOLD}> ${GREEN_BOLD}passed${RESTORE}"
+    else
+        echo -e "${YELLOW_BOLD}> ${RED_BOLD}failed${RESTORE}"
+        if [ "$TEST_ERROR" != '' ]; then
+            echo -e "$TEST_ERROR"
+        fi
+    fi
+}
+
+function test_add_and_get
+{
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    get_result=$(eval "$PASSMAN get foo")
+    if [ "$get_result" = "bar	123" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_getkeys
+{
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    echo -e "test\n\ntest123" | eval "$PASSMAN add" > /dev/null
+    getkeys_result=$(eval "$PASSMAN getkeys")
+    if [ "$getkeys_result" = "foo${NEWLINE}test" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_sethint_and_gethint
+{
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN sethint foo 'hint.{2}'" > /dev/null
+    gethint_result=$(eval "$PASSMAN gethint foo")
+    if [ "$gethint_result" = "hint.{2}" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_getkeyshints
+{
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    echo -e "test\n\ntest123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN sethint foo 'hint.{2}'" > /dev/null
+    eval "$PASSMAN sethint test '^testhint'" > /dev/null
+    getkeyshints_result=$(eval "$PASSMAN getkeyshints")
+    if [ "$getkeyshints_result" = \
+        "foo	hint.{2}${NEWLINE}test	^testhint" ]; then
+        return 0
+    else
+        export TEST_ERROR="Unexpected result:\n$getkeyshints_result"
+        return 1
+    fi
+}
+
+function test_del
+{
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    echo -e "test\n\ntest123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN del foo" > /dev/null
+    getkeys_result=$(eval "$PASSMAN getkeys")
+    if [ "$getkeys_result" = "test" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_submitform_with_username
+{
+    echo "A menu showing two items named 'foo' and 'test' will open. Please "
+    echo "select 'foo' and press return."
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    echo -e "test\n\ntest123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN submitform &" > /dev/null
+    read -sp "" username_and_password
+    if [ "$username_and_password" = "bar	123" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_submitform_without_username
+{
+    echo "The menu will open again. Select 'test' this time."
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    echo -e "test\n\ntest123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN submitform &" > /dev/null
+    read -sp "" username_and_password
+    if [ "$username_and_password" = "test123" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_submitform_no_output_on_escape
+{
+    echo "The menu will open again. Do not select 'foo' or 'test', instead "
+    echo "press escape."
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    echo -e "test\n\ntest123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN submitform &" > /dev/null
+    read -p "Then type 'yes' and press return: " output
+    if [ "$output" = "yes" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_submitform_with_argument
+{
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    echo -e "test\n\ntest123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN submitform foo&" > /dev/null
+    read -sp "" username_and_password
+    if [ "$username_and_password" = "bar	123" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Parse command line arguments.
+while getopts c: opt; do
+    case $opt in
+        c)
+            export CONFIG_PATH=$OPTARG
+            ;;
+    esac
+done
+
+if [ -z "$CONFIG_PATH" ]; then
+    CONFIG_PATH="$HOME/.passman/config"
+fi
+if [[ ! -f "$CONFIG_PATH" ]]; then
+    echo -n "In order to use passman-selftest, you need to set configuration "
+    echo "options in the file $CONFIG_PATH"
+    exit 1
+fi
+
+test_passman

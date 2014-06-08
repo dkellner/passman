@@ -15,34 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SCRIPT_DIR="$( cd "$( dirname "$(readlink -f ${BASH_SOURCE[0]})" )" && pwd -P )"
-
-if [[ -f "$SCRIPT_DIR/config" ]]; then
-	. "$SCRIPT_DIR/config"
-else
-	echo "In order to use passman, you need to set configuration options in the file $SCRIPT_DIR/config"
-	exit 1
-fi
-
-if [[ ! -f "$PASS_FILE" ]]; then
-	echo "Password file $PASS_FILE not found!"
-	exit 1
-fi
-
-if [[ -z "$PASS_LENGTH" ]]; then
-	PASS_LENGTH='15'
-fi
+function read_passes
+{
+    if [ -s "$PASS_FILE" ]; then
+        gpg --no-tty --quiet -d "$PASS_FILE"
+    else
+        echo -n ''
+    fi
+}
 
 # Returns all keys present in the password file.
 function getkeys
 {
-    gpg --no-tty --quiet -q -d "$PASS_FILE" | cut -f 1 | sort
+    read_passes | cut -f 1 | sort
 }
 
 # Returns all keys and additionally auto-type hints if present
 function getkeyshints
 {
-    gpg --no-tty --quiet -q -d "$PASS_FILE" | cut -f 1,4 | sort
+    read_passes | cut -f 1,4 | sort
 }
 
 # Gets a login as a string "user<TAB>pass".
@@ -52,9 +43,9 @@ function get
     local key="$1"
     if [[ -n "$key" ]]; then
         if [[ -z "$ONLY_PW" ]]; then
-            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$key\t" | cut -f 2,3
+            read_passes | grep -P "^$key\t" | cut -f 2,3
         else
-            gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$key\t" | cut -f 3
+            read_passes | grep -P "^$key\t" | cut -f 3
         fi
     fi
 }
@@ -65,7 +56,7 @@ function gethint
 {
     local key="$1"
     if [[ -n "$key" ]]; then
-        gpg --no-tty --quiet -q -d "$PASS_FILE" | grep -P "^$key\t" | cut -f 4
+        read_passes | grep -P "^$key\t" | cut -f 4
     fi
 }
 
@@ -97,12 +88,14 @@ function add
 
     local line="$site\\t$user\\t$pass"
 
-    local passes=$(gpg --no-tty --quiet -d "$PASS_FILE")
+    local passes=$(read_passes)
 
     if [[ $? -eq 0 ]]; then
-        passes+='\n'
+        if [ -n "$passes" ]; then
+            passes+='\n'
+        fi
         passes+="$line"
-        echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
+        echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
     fi
 }
 
@@ -112,10 +105,10 @@ function del
 {
     local key="$1"
     if [[ -n "$key" ]]; then
-        local passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$key	/d")
+        local passes=$(read_passes | sed "/^$key	/d")
 
         if [[ $? -eq 0 ]]; then
-            echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
+            echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
         fi
     fi
 }
@@ -146,12 +139,12 @@ function sethint
         local regex=$(echo "$hint" | tr -d '\t')
         local line="$key\\t$user\\t$password\\t$regex"
 
-        local passes=$(gpg --no-tty --quiet -d "$PASS_FILE" | sed "/^$key	/d")
+        local passes=$(read_passes | sed "/^$key	/d")
 
         if [[ $? -eq 0 ]]; then
             passes+='\n'
             passes+="$line"
-            echo -e "$passes" | gpg $GPG_OPTS --output "$PASS_FILE"
+            echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
         fi
     fi
 }
@@ -253,13 +246,36 @@ function onlypw
     eval "$@"
 }
 
+# Parse command line arguments.
+while getopts c: opt; do
+    case $opt in
+        c)
+            export CONFIG_PATH=$OPTARG
+            ;;
+    esac
+done
+shift `expr $OPTIND - 1`
 
+# Read and verify config.
+if [ -z "$CONFIG_PATH" ]; then
+    CONFIG_PATH="$HOME/.passman/config"
+fi
+if [[ -f "$CONFIG_PATH" ]]; then
+    . "$CONFIG_PATH"
+else
+    echo -n "In order to use passman, you need to set configuration options in "
+    echo "the file $CONFIG_PATH"
+    exit 1
+fi
+if [[ -z "$PASS_LENGTH" ]]; then
+    PASS_LENGTH='15'
+fi
 
 # Set up GPG identity. Use symmetric cipher if $GPG_IDENTITY has not been set.
 if [[ -z "$GPG_IDENTITY" ]]; then
     GPG_OPTS='--yes --symmetric --cipher-algo AES256'
 else
-    GPG_OPTS="--yes --encrypt --recipient $GPG_IDENTITY"
+    GPG_OPTS="--yes --encrypt --recipient '$GPG_IDENTITY'"
 fi
 
 # This has to be done to allow empty parameters (e.g. for user-less logins).

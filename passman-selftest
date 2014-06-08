@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-TEST_CONFIG_FILE=/tmp/passman-selftest-config
-TEST_PASS_FILE=/tmp/passman-selftest-passfile.gpg
+TEST_CONFIG_FILE="$(mktemp)"
+TEST_PASS_FILE="$(mktemp)"
+chmod 600 "$TEST_CONFIG_FILE"
 
 PASSMAN="`dirname $0`/passman -c '$TEST_CONFIG_FILE'"
 
@@ -232,3 +233,5 @@ if [[ ! -f "$CONFIG_PATH" ]]; then
 fi
 
 test_passman
+
+rm -f "$TEST_CONFIG_FILE" "$TEST_PASS_FILE"

@@ -74,6 +74,7 @@ function run_all_tests
     run_test "test_submitform_without_username"
     run_test "test_submitform_no_output_on_escape"
     run_test "test_submitform_with_argument"
+    run_test "test_submitform_with_password_containing_question_mark"
 }
 
 function run_test
@@ -215,6 +216,19 @@ function test_submitform_with_argument
     if [ "$username_and_password" = "bar	123" ]; then
         return 0
     else
+        return 1
+    fi
+}
+
+function test_submitform_with_password_containing_question_mark
+{
+    echo -e "foo\nbar\ntest?123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN onlypw submitform foo&" > /dev/null
+    read -sp "" password
+    if [ "$password" = "test?123" ]; then
+        return 0
+    else
+        export TEST_ERROR="expected 'test?123', got '$password'"
         return 1
     fi
 }

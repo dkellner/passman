@@ -26,9 +26,14 @@ NEWLINE='
 
 function test_passman
 {
-    print_introduction
+    local test_to_run="$1"
     setup_test_config
-    run_all_tests
+    if [ -n "$test_to_run" ]; then
+        run_test "$1"
+    else
+        print_introduction
+        run_all_tests
+    fi
 }
 
 function print_introduction
@@ -232,6 +237,6 @@ if [[ ! -f "$CONFIG_PATH" ]]; then
     exit 1
 fi
 
-test_passman
+test_passman "$1"
 
 rm -f "$TEST_CONFIG_FILE" "$TEST_PASS_FILE"

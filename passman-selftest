@@ -82,17 +82,17 @@ function run_test
     export TEST_ERROR=''
     rm -f "$TEST_PASS_FILE"
     RESTORE='\033[0m'
-    WHITE_BOLD='\033[01;37m'
-    GREEN_BOLD='\033[01;32m'
+    BOLD='\033[01m'
     RED_BOLD='\033[01;31m'
-    YELLOW_BOLD='\033[01;33m'
+    GREEN_BOLD='\033[01;32m'
+    BLUE_BOLD='\033[01;34m'
     echo
-    echo -e "${YELLOW_BOLD}* ${WHITE_BOLD}$1${RESTORE}"
+    echo -e "${BLUE_BOLD}* ${RESTORE}${BOLD}$1${RESTORE}"
     eval $1
     if [ $? -eq 0 ]; then
-        echo -e "${YELLOW_BOLD}> ${GREEN_BOLD}passed${RESTORE}"
+        echo -e "${BLUE_BOLD}> ${GREEN_BOLD}passed${RESTORE}"
     else
-        echo -e "${YELLOW_BOLD}> ${RED_BOLD}failed${RESTORE}"
+        echo -e "${BLUE_BOLD}> ${RED_BOLD}failed${RESTORE}"
         if [ "$TEST_ERROR" != '' ]; then
             echo -e "$TEST_ERROR"
         fi

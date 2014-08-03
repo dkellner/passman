@@ -40,6 +40,12 @@ function write_passfile
     fi
 }
 
+# Helper function to display the dmenu.
+function dmenu_select
+{
+    dmenu -i -p "Select:"
+}
+
 # Returns all keys present in the password file.
 function getkeys
 {
@@ -190,7 +196,7 @@ function submitform
         key="$1"
     else
         keys=$(getkeys)
-        key=$(echo "$keys" | dmenu -p "Select:")
+        key=$(echo "$keys" | dmenu_select)
     fi
 
     local login=$(get "$key")
@@ -244,7 +250,7 @@ function autosubmitform
         *)
             # trick the IFS to output array items as separate lines for dmenu
             local OLDIFS="$IFS"; IFS=$'\n'
-            local key=$(echo "${matches[*]}" | dmenu -p "Select:")
+            local key=$(echo "${matches[*]}" | dmenu_select)
             IFS="$OLDIFS"
             if [[ -z "$key" ]]; then
                 return;

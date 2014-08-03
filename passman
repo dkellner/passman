@@ -15,25 +15,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function read_passes
+# Helper function to read the entire passfile.
+#
+# The passfile content is echoed to stdout.
+function read_passfile
 {
     if [ -s "$PASS_FILE" ]; then
-        gpg --no-tty --quiet -d "$PASS_FILE"
+        gpg2 --no-tty --quiet -d "$PASS_FILE"
     else
         echo -n ''
+    fi
+}
+
+# Helper function to write the entire passfile.
+#
+# The passfile content to write must be piped to this function, e.g.
+# echo -e "foo\nbar" | write_passfile
+function write_passfile
+{
+    if [ -z "$GPG_IDENTITY" ]; then
+        gpg2 --symmetric --cipher-algo AES256 --yes --output "$PASS_FILE"
+    else
+        gpg2 --encrypt --recipient "$GPG_IDENTITY" --yes --output "$PASS_FILE"
     fi
 }
 
 # Returns all keys present in the password file.
 function getkeys
 {
-    read_passes | cut -f 1 | sort
+    read_passfile | cut -f 1 | sort
 }
 
 # Returns all keys and additionally auto-type hints if present
 function getkeyshints
 {
-    read_passes | cut -f 1,4 | sort
+    read_passfile | cut -f 1,4 | sort
 }
 
 # Gets a login as a string "user<TAB>pass".
@@ -43,9 +59,9 @@ function get
     local key="$1"
     if [[ -n "$key" ]]; then
         if [[ -z "$ONLY_PW" ]]; then
-            read_passes | grep -P "^$key\t" | cut -f 2,3
+            read_passfile | grep -P "^$key\t" | cut -f 2,3
         else
-            read_passes | grep -P "^$key\t" | cut -f 3
+            read_passfile | grep -P "^$key\t" | cut -f 3
         fi
     fi
 }
@@ -56,7 +72,7 @@ function gethint
 {
     local key="$1"
     if [[ -n "$key" ]]; then
-        read_passes | grep -P "^$key\t" | cut -f 4
+        read_passfile | grep -P "^$key\t" | cut -f 4
     fi
 }
 
@@ -88,14 +104,14 @@ function add
 
     local line="$site\\t$user\\t$pass"
 
-    local passes=$(read_passes)
+    local passes=$(read_passfile)
 
     if [[ $? -eq 0 ]]; then
         if [ -n "$passes" ]; then
             passes+='\n'
         fi
         passes+="$line"
-        echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
+        echo -e "$passes" | write_passfile
     fi
 }
 
@@ -105,10 +121,10 @@ function del
 {
     local key="$1"
     if [[ -n "$key" ]]; then
-        local passes=$(read_passes | sed "/^$key	/d")
+        local passes=$(read_passfile | sed "/^$key	/d")
 
         if [[ $? -eq 0 ]]; then
-            echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
+            echo -e "$passes" | write_passfile
         fi
     fi
 }
@@ -139,12 +155,12 @@ function sethint
         local regex=$(echo "$hint" | tr -d '\t')
         local line="$key\\t$user\\t$password\\t$regex"
 
-        local passes=$(read_passes | sed "/^$key	/d")
+        local passes=$(read_passfile | sed "/^$key	/d")
 
         if [[ $? -eq 0 ]]; then
             passes+='\n'
             passes+="$line"
-            echo -e "$passes" | eval "gpg $GPG_OPTS --output '$PASS_FILE'"
+            echo -e "$passes" | write_passfile
         fi
     fi
 }
@@ -269,13 +285,6 @@ else
 fi
 if [[ -z "$PASS_LENGTH" ]]; then
     PASS_LENGTH='15'
-fi
-
-# Set up GPG identity. Use symmetric cipher if $GPG_IDENTITY has not been set.
-if [[ -z "$GPG_IDENTITY" ]]; then
-    GPG_OPTS='--yes --symmetric --cipher-algo AES256'
-else
-    GPG_OPTS="--yes --encrypt --recipient '$GPG_IDENTITY'"
 fi
 
 # This has to be done to allow empty parameters (e.g. for user-less logins).

@@ -18,11 +18,11 @@
 # ======================================================================
 # Edit the following two variables to your needs
 #
-# $PASS_FILE optimally should contain an absolute path, because it is not 
+# $PASS_FILE optimally should contain an absolute path, because it is not
 # guaranteed that the script gets called from the same directory
 # The plain password file contains entries in the form sitename,user,password
 # and may be encrypted either with
-# 
+#
 # gpg --encrypt --recipient <gpg_identity> <plain_password_file>
 #
 # when using public-key cryptography or with
@@ -32,7 +32,7 @@
 # when using symmetric cryptography which does not require a private key.
 # A plain text sample file is distributed in this directory: sample-passwords.txt
 #
-# $GPG_IDENTITY is your personal GPG identity you want to encrypt the 
+# $GPG_IDENTITY is your personal GPG identity you want to encrypt the
 # password file with. If this variable is set, public-key cryptography will
 # be used. If it is not set, symmetric cryptography will be used instead.
 #
@@ -41,4 +41,11 @@
 PASS_FILE='' #FILL ME
 GPG_IDENTITY='' #FILL ME
 PASS_LENGTH='15'
+
+# You can pass various options to dmenu to make passman look and behave
+# differently. See `man dmenu` for details.
+# For example, uncomment the following line to make passman appear at the bottom
+# of the screen:
+#DMENU_OPTIONS='-b'
+
 # ======================================================================

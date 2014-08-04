@@ -43,7 +43,8 @@ function write_passfile
 # Helper function to display the dmenu.
 function dmenu_select
 {
-    dmenu -i -p "Select:"
+    local default_options='-i -nb #333 -nf white -sb #0a0 -sf white'
+    eval 'dmenu $default_options $DMENU_OPTIONS -p "Select:"'
 }
 
 # Returns all keys present in the password file.
@@ -291,6 +292,9 @@ else
 fi
 if [[ -z "$PASS_LENGTH" ]]; then
     PASS_LENGTH='15'
+fi
+if [[ -z "$DMENU_OPTIONS" ]]; then
+    DMENU_OPTIONS=''
 fi
 
 # This has to be done to allow empty parameters (e.g. for user-less logins).

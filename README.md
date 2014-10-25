@@ -6,37 +6,28 @@
 * Support for either public-key or symmetric encryption
 * Add, get and delete passwords with simple commands
 * Easy web browser / login forms support
-* Custom regular expression for matching windows
+* Custom regular expressions for matching windows
 
 ## Usage
 
 ### Prerequisites and configuration
 
-1. You have to have the following software installed an accessible on your system:
+1. Make sure you have the following software installed and accessible on your
+   system:
 
-    [bash](http://www.gnu.org/software/bash/),
-    [GnuPG](http://www.gnupg.org/),
-    [dmenu](http://tools.suckless.org/dmenu/),
-    [xdotool](http://www.semicomplete.com/projects/xdotool/),
-    [pwgen](http://sourceforge.net/projects/pwgen/)
+   [bash](http://www.gnu.org/software/bash/),
+   [gpg2](http://www.gnupg.org/),
+   [dmenu](http://tools.suckless.org/dmenu/),
+   [xdotool](http://www.semicomplete.com/projects/xdotool/),
+   [pwgen](http://sourceforge.net/projects/pwgen/)
 
-2. Create a plain password file with entries on each line like
+   For Debian/Ubuntu users, this translates into having the following packages
+   installed: bash, gnupg2, suckless-tools, xdotool and pwgen.
 
-        site<TAB>user<TAB>pass
+2. Run passman-config. It will set up $HOME/.passman/config for you.
 
-    and encrypt it with one of the two following commands
-
-        $ gpg --encrypt --recipient <gpg_identity> <plain_password_file>
-
-    if you prefer to use your own private key or
-
-        $ gpg --symmetric --cipher-algo AES256 <plain_password_file>
-
-    if you want to use symmetric encryption without a private key.
-
-3. Copy the file *config.dist* to *config* and modify the two variables $PASS_FILE and $GPG_IDENTITY to your needs. You may leave $GPG_IDENTITY empty. In this case symmetric encryption will be used.
-
-4. For convenience set up a GPG-Agent which caches your GPG credentials for some time.
+3. For convenience set up a GPG-Agent which caches your GPG credentials for some
+   time.
 
 ### Running
 

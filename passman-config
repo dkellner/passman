@@ -109,7 +109,10 @@ function prompt_for_pass_length
 
 function prompt_for_dmenu_options
 {
-    echo "DMENU_OPTIONS"
+    echo "You can pass various options to dmenu to make passman look and behave"
+    echo "differently. See \`man dmenu\` for details."
+    echo "For example, setting DMENU_OPTIONS to \"-b\" causes passman to appear"
+    echo "at the bottom of the screen."
     read -p "DMENU_OPTIONS? [${CONFIG[DMENU_OPTIONS]}] " new_dmenu_options
     if [ ! -z "$new_dmenu_options" ]; then
         CONFIG[DMENU_OPTIONS]=$new_dmenu_options

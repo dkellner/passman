@@ -180,11 +180,21 @@ function autotype
     local user="$1"
     local password="$2"
     if [[ -n "$user" ]] && [[ -z "$ONLY_PW" ]]; then
-        xdotool type --delay 50 -- "$user"
-        xdotool key Tab
+        paste "$user"
+        keypress "\t"
     fi
-    xdotool type --delay 50 -- "$password"
-    xdotool key Return
+    paste "$password"
+    keypress "\r"
+}
+
+function paste
+{
+    echo -n "$1" | xvkbd -file - 2>/dev/null
+}
+
+function keypress
+{
+    xvkbd -text "$1" 2>/dev/null
 }
 
 # Fills credentials by selecting the desired site with dmenu in a (e.g. browser) form

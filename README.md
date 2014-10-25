@@ -19,10 +19,11 @@
    [gpg2](http://www.gnupg.org/),
    [dmenu](http://tools.suckless.org/dmenu/),
    [xdotool](http://www.semicomplete.com/projects/xdotool/),
+   [xvkbd](http://homepage3.nifty.com/tsato/xvkbd/),
    [pwgen](http://sourceforge.net/projects/pwgen/)
 
    For Debian/Ubuntu users, this translates into having the following packages
-   installed: bash, gnupg2, suckless-tools, xdotool and pwgen.
+   installed: bash, gnupg2, suckless-tools, xdotool, xvkbd and pwgen.
 
 2. Run passman-config. It will set up $HOME/.passman/config for you.
 

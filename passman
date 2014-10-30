@@ -180,21 +180,21 @@ function autotype
     local user="$1"
     local password="$2"
     if [[ -n "$user" ]] && [[ -z "$ONLY_PW" ]]; then
-        paste "$user"
-        keypress "\t"
+        type_string "$user"
+        press_key "Tab"
     fi
-    paste "$password"
-    keypress "\r"
+    type_string "$password"
+    press_key "Return"
 }
 
-function paste
+function type_string
 {
-    echo -n "$1" | xvkbd -file - 2>/dev/null
+    echo "str $1" | xte
 }
 
-function keypress
+function press_key
 {
-    xvkbd -text "$1" 2>/dev/null
+    echo "key $1" | xte
 }
 
 # Fills credentials by selecting the desired site with dmenu in a (e.g. browser) form

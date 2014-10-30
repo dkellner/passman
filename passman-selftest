@@ -236,7 +236,6 @@ function test_submitform_with_password_containing_question_mark
 
 function test_submitform_with_password_containing_german_quote
 {
-    echo "NOTE: This test is known to fail at the moment."
     echo -e "foo\nbar\ntest“123" | eval "$PASSMAN add" > /dev/null
     eval "$PASSMAN onlypw submitform foo&" > /dev/null
     read -sp "" password

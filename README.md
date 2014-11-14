@@ -48,7 +48,7 @@
 
     $ passman submitform
 
-A dmenu dialog will pop up, let you chose the desired entry and enter the credentials via xdotool
+A dmenu dialog will pop up, let you chose the desired entry and enter the credentials via xte
 in the form "user<TAB>password<RETURN>" or "password<RETURN>" if there is no user for an entry.
 
 #### Filling forms (automatically try to match site key against current window name)

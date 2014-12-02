@@ -15,6 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Indices of columns in the passfile:
+KEY_COLUMN=1
+USER_COLUMN=2
+PASSWORD_COLUMN=3
+HINT_COLUMN=4
+
 # Helper function to read the entire passfile.
 #
 # The passfile content is echoed to stdout.
@@ -47,16 +53,31 @@ function dmenu_select
     eval 'dmenu $default_options $DMENU_OPTIONS -p "Select:"'
 }
 
+# Helper function to get a single line of the passfile matching the given key.
+#
+# The line is echoed to stdout. It is ensured that it contains all columns, even
+# when this is not the case in the underlying passfile. Missing columns will be
+# set to "".
+function get_passfile_line
+{
+    local key="$1"
+    local line=$(read_passfile | grep -P "^$key\t")
+    local user=$(echo "$line" | cut -f $USER_COLUMN)
+    local password=$(echo "$line" | cut -f $PASSWORD_COLUMN)
+    local hint=$(echo "$line" | cut -f $HINT_COLUMN)
+    echo -e "$key\t$user\t$password\t$hint"
+}
+
 # Returns all keys present in the password file.
 function getkeys
 {
-    read_passfile | cut -f 1 | sort
+    read_passfile | cut -f $KEY_COLUMN | sort
 }
 
 # Returns all keys and additionally auto-type hints if present
 function getkeyshints
 {
-    read_passfile | cut -f 1,4 | sort
+    read_passfile | cut -f $KEY_COLUMN,$HINT_COLUMN | sort
 }
 
 # Gets a login as a string "user<TAB>pass".
@@ -66,9 +87,9 @@ function get
     local key="$1"
     if [[ -n "$key" ]]; then
         if [[ -z "$ONLY_PW" ]]; then
-            read_passfile | grep -P "^$key\t" | cut -f 2,3
+            get_passfile_line "$key" | cut -f $USER_COLUMN,$PASSWORD_COLUMN
         else
-            read_passfile | grep -P "^$key\t" | cut -f 3
+            get_passfile_line "$key" | cut -f $PASSWORD_COLUMN
         fi
     fi
 }
@@ -79,7 +100,7 @@ function gethint
 {
     local key="$1"
     if [[ -n "$key" ]]; then
-        read_passfile | grep -P "^$key\t" | cut -f 4
+        get_passfile_line "$key" | cut -f $HINT_COLUMN
     fi
 }
 

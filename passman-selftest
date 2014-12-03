@@ -76,6 +76,9 @@ function run_all_tests
     run_test "test_submitform_with_argument"
     run_test "test_submitform_with_password_containing_question_mark"
     run_test "test_submitform_with_password_containing_german_quote"
+    run_test "test_settemplate_and_gettemplate"
+    run_test "test_submitform_with_template"
+    run_test "test_onlypw_submitform_with_template"
 }
 
 function run_test
@@ -243,6 +246,51 @@ function test_submitform_with_password_containing_german_quote
         return 0
     else
         export TEST_ERROR="expected 'test“123', got '$password'"
+        return 1
+    fi
+}
+
+function test_settemplate_and_gettemplate
+{
+    local template="Username,Tab,Tab,Password,Return"
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN settemplate foo '$template'" > /dev/null
+    local settemplate_result=$(eval "$PASSMAN gettemplate foo")
+    if [ "$settemplate_result" = "$template" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_submitform_with_template
+{
+    echo "A menu showing one item named 'foo' will open. Please select"
+    echo "'foo' and press return."
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN settemplate foo 'Username,Tab,Tab,Password,Return'" \
+        > /dev/null
+    eval "$PASSMAN submitform &" > /dev/null
+    read -sp "" username_and_password
+    if [ "$username_and_password" = "bar		123" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_onlypw_submitform_with_template
+{
+    echo "A menu showing one item named 'foo' will open. Please select"
+    echo "'foo' and press return."
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN settemplate foo 'Username,Tab,Tab,Password,Return'" \
+        > /dev/null
+    eval "$PASSMAN onlypw submitform &" > /dev/null
+    read -sp "" password
+    if [ "$password" = "123" ]; then
+        return 0
+    else
         return 1
     fi
 }

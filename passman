@@ -20,6 +20,9 @@ KEY_COLUMN=1
 USER_COLUMN=2
 PASSWORD_COLUMN=3
 HINT_COLUMN=4
+TEMPLATE_COLUMN=5
+
+NUM_COLUMNS=5
 
 # Helper function to read the entire passfile.
 #
@@ -57,15 +60,58 @@ function dmenu_select
 #
 # The line is echoed to stdout. It is ensured that it contains all columns, even
 # when this is not the case in the underlying passfile. Missing columns will be
-# set to "".
+# set to a suitable default value.
+# The function will print nothing if the key is not found.
 function get_passfile_line
 {
     local key="$1"
     local line=$(read_passfile | grep -P "^$key\t")
-    local user=$(echo "$line" | cut -f $USER_COLUMN)
-    local password=$(echo "$line" | cut -f $PASSWORD_COLUMN)
-    local hint=$(echo "$line" | cut -f $HINT_COLUMN)
-    echo -e "$key\t$user\t$password\t$hint"
+    if [ -n "$line" ]; then
+        local user=$(echo "$line" | cut -f $USER_COLUMN)
+        local password=$(echo "$line" | cut -f $PASSWORD_COLUMN)
+        local hint=$(echo "$line" | cut -f $HINT_COLUMN)
+        local template=$(echo "$line" | cut -f $TEMPLATE_COLUMN)
+        if [ -z "$template" ]; then
+            template="Username,Tab,Password,Return"
+        fi
+        echo -e "$key\t$user\t$password\t$hint\t$template"
+    fi
+}
+
+# Changes the value of one column of a passfile line and echoes the resulting
+# passfile line.
+function change_passfile_line_column
+{
+    local passfile_line="$1"
+    local column="$2"
+    local new_value="$3"
+    local result=""
+    if (( column > 1 )); then
+        result=$(echo "$passfile_line" | cut -f-`expr $column - 1`)
+        result+="	"
+    fi
+    result+="$new_value"
+    if (( column < NUM_COLUMNS )); then
+        result+="	"
+        result+=$(echo "$passfile_line" | cut -f`expr $column + 1`-)
+    fi
+    echo -n "$result"
+}
+
+# Stores a passfile line. If a line with the same key already exists, it gets
+# overwritten.
+function store_passfile_line
+{
+    local passfile_line="$1"
+    local key=$(echo "$passfile_line" | cut -f $KEY_COLUMN)
+    local passes=$(read_passfile | sed "/^$key	/d")
+    if [ $? -eq 0 ]; then
+        if [ -n "$passes" ]; then
+            passes+="\n"
+        fi
+        passes+="$passfile_line"
+        echo -e "$passes" | write_passfile
+    fi
 }
 
 # Returns all keys present in the password file.
@@ -101,6 +147,16 @@ function gethint
     local key="$1"
     if [[ -n "$key" ]]; then
         get_passfile_line "$key" | cut -f $HINT_COLUMN
+    fi
+}
+
+# Gets the template for a login.
+# First argument: entry key
+function gettemplate
+{
+    local key="$1"
+    if [ -n "$key" ]; then
+        get_passfile_line "$key" | cut -f $TEMPLATE_COLUMN
     fi
 }
 
@@ -193,19 +249,47 @@ function sethint
     fi
 }
 
-# Types the credentials as user<TAB>password<enter>.
-# First argument : user
+# Set template for specific entry.
+# First argument: entry key
+# Second argument: template to set
+function settemplate
+{
+    local key="$1"
+    local template="$2"
+    if [ -n "$key" ]; then
+        local passfile_line=$(get_passfile_line "$key")
+        if [ -z "$passfile_line" ]; then
+            echo "Key '$key' not found."
+            return
+        fi
+        passfile_line=$(change_passfile_line_column "$passfile_line" \
+            $TEMPLATE_COLUMN "$template")
+        store_passfile_line "$passfile_line"
+    fi
+}
+
+# Types the credentials according to the template.
+#
+# First argument: user
 # Second argument: password
+# Third argument: template
 function autotype
 {
     local user="$1"
     local password="$2"
-    if [[ -n "$user" ]] && [[ -z "$ONLY_PW" ]]; then
-        type_string "$user"
-        press_key "Tab"
+    local template="$3"
+    if [ -z "$user" ] || [ -n "$ONLY_PW" ]; then
+        template="Password,Return"
     fi
-    type_string "$password"
-    press_key "Return"
+    for part in ${template//,/ }; do
+        if [ "$part" = "Username" ]; then
+            type_string "$user"
+        elif [ "$part" = "Password" ]; then
+            type_string "$password"
+        else
+            press_key "$part"
+        fi
+    done
 }
 
 function type_string
@@ -231,16 +315,16 @@ function submitform
         key=$(echo "$keys" | dmenu_select)
     fi
 
-    local login=$(get "$key")
-
-    if [[ -z "$login" ]]; then
+    local passfile_line=$(get_passfile_line "$key")
+    if [ -z "$passfile_line" ]; then
         return
     fi
 
-    local user=${login%	*}
-    local password=${login#*	}
+    local user=$(echo "$passfile_line" | cut -f $USER_COLUMN)
+    local password=$(echo "$passfile_line" | cut -f $PASSWORD_COLUMN)
+    local template=$(echo "$passfile_line" | cut -f $TEMPLATE_COLUMN)
 
-    autotype "$user" "$password"
+    autotype "$user" "$password" "$template"
 }
 
 # Try to match site key against current window name

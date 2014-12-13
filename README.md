@@ -77,7 +77,7 @@ Expects a comma separated list of 'Username', 'Password', 'Tab' and 'Return'.
 E.g. 'Username,Tab,Tab,Password,Return' for a site where you need to press 'Tab'
 twice between entering username and password.
 
-#### Query the regular expression hint for a specific entry
+#### Query the custom template for a specific entry
 
     $ passman gettemplate <site>
 

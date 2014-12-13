@@ -68,6 +68,19 @@ Be sure to quote the regex with single quotes to avoid false interpretations of 
 
     $ passman gethint <site>
 
+#### Setting a custom template for a specific entry
+
+    $ passman settemplate <site> <template>
+
+This changes the way passman will type the credentials when filling forms.
+Expects a comma separated list of 'Username', 'Password', 'Tab' and 'Return'.
+E.g. 'Username,Tab,Tab,Password,Return' for a site where you need to press 'Tab'
+twice between entering username and password.
+
+#### Query the regular expression hint for a specific entry
+
+    $ passman gettemplate <site>
+
 ## License
 
 This program is free software: you can redistribute it and/or modify

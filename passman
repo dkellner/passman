@@ -220,32 +220,15 @@ function sethint
 {
     local key="$1"
     local hint="$2"
-    if [[ -n "$key" ]]; then
-        local login=$(get "$key")
-
-        if [[ -z "$login" ]]; then
+    if [ -n "$key" ]; then
+        local passfile_line=$(get_passfile_line "$key")
+        if [ -z "$passfile_line" ]; then
             echo "Key '$key' not found."
             return
         fi
-
-        if [[ -z "$hint" ]]; then
-            echo "No regex specified."
-            return
-        fi
-
-        local user=${login%	*}
-        local password=${login#*	}
-
-        local regex=$(echo "$hint" | tr -d '\t')
-        local line="$key\\t$user\\t$password\\t$regex"
-
-        local passes=$(read_passfile | sed "/^$key	/d")
-
-        if [[ $? -eq 0 ]]; then
-            passes+='\n'
-            passes+="$line"
-            echo -e "$passes" | write_passfile
-        fi
+        passfile_line=$(change_passfile_line_column "$passfile_line" \
+            $HINT_COLUMN "$hint")
+        store_passfile_line "$passfile_line"
     fi
 }
 

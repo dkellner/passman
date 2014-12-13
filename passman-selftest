@@ -79,6 +79,8 @@ function run_all_tests
     run_test "test_settemplate_and_gettemplate"
     run_test "test_submitform_with_template"
     run_test "test_onlypw_submitform_with_template"
+    run_test "test_sethint_with_empty_argument"
+    run_test "test_settemplate_with_empty_argument"
 }
 
 function run_test
@@ -289,6 +291,33 @@ function test_onlypw_submitform_with_template
     eval "$PASSMAN onlypw submitform &" > /dev/null
     read -sp "" password
     if [ "$password" = "123" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_sethint_with_empty_argument
+{
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN sethint foo 'hint.{2}'" > /dev/null
+    eval "$PASSMAN sethint foo ''" > /dev/null
+    gethint_result=$(eval "$PASSMAN gethint foo")
+    if [ "$gethint_result" = "" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function test_settemplate_with_empty_argument
+{
+    echo -e "foo\nbar\n123" | eval "$PASSMAN add" > /dev/null
+    eval "$PASSMAN settemplate foo 'Username,Tab,Tab,Password,Return'" \
+        > /dev/null
+    eval "$PASSMAN settemplate foo ''" > /dev/null
+    gettemplate_result=$(eval "$PASSMAN gettemplate foo")
+    if [ "$gettemplate_result" = "Username,Tab,Password,Return" ]; then
         return 0
     else
         return 1

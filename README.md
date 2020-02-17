@@ -1,5 +1,13 @@
 # passman - A simple command line password manager
 
+## DEPRECATION NOTICE
+
+This project is not maintained anymore. While it's been in use in its current
+version for more than five years and was working reasonably well, I've
+personally switched to `pass` (https://www.passwordstore.org/). If you're using
+`passman` and consider switching as well, you can export all your passwords to
+`pass` using `passman export_to_pass`.
+
 ## Features
 
 * Strong encryption via GPG

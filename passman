@@ -367,6 +367,46 @@ function onlypw
     eval "$@"
 }
 
+function export_to_pass
+{
+    echo "Adds all passwords to pass (https://www.passwordstore.org/)."
+    echo
+    echo "A line in passman's password file contains five columns:"
+    echo "key, user, password, hint, template"
+    echo
+    echo "For each line a new entry named <KEY> will be inserted in pass:"
+    echo "<PASSWORD>"
+    echo "username: <USER>"
+    echo "hint: <HINT>"
+    echo "template: <TEMPLATE>"
+    echo
+    echo "The lines containing user, hint and template are only added if"
+    echo "they are not empty."
+    echo
+    read -p "Continue? [y|N] " c
+    if [ "$c" = "y" ]; then
+        read_passfile | while read line; do
+            add_to_pass "$line"
+        done
+    fi
+}
+
+function add_to_pass
+{
+    local passfile_line=$1
+    local key=$(echo "$passfile_line" | cut -f $KEY_COLUMN)
+    local user=$(echo "$passfile_line" | cut -f $USER_COLUMN)
+    local password=$(echo "$passfile_line" | cut -f $PASSWORD_COLUMN)
+    local hint=$(echo "$passfile_line" | cut -f $HINT_COLUMN)
+    local template=$(echo "$passfile_line" | cut -f $TEMPLATE_COLUMN)
+    {
+        echo "$password"
+        test -n "$user" && echo "username: $user"
+        test -n "$hint" && echo "hint: $hint"
+        test -n "$template" && echo "template: $template"
+    } | pass insert -m "$key"
+}
+
 # Parse command line arguments.
 while getopts c: opt; do
     case $opt in
